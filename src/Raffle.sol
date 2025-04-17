@@ -12,7 +12,8 @@ pragma solidity ^0.8.19;
 // Modifiers
 // Functions
 
-import {VRFConsumerBaseV2Plus} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFConsumerBaseV2Plus} from
+    "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 /**
@@ -26,57 +27,58 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__SendMoreToEnterRaffle();
 
     // --- State Variables ---
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+    uint32 private constant NUM_WORDS = 1;
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval; // Duration of lottery in seconds
+    bytes32 private immutable i_keyHash;
+    uint256 private immutable i_subscriptionId;
+    uint32 private immutable i_callbackGasLimit;
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
-
-    bytes32 private keyHash;
-    uint64 private s_subscriptionId;
-    uint16 private requestConfirmations;
-    uint32 private callbackGasLimit;
-    uint32 private numWords;
-    bool private enableNativePayment;
 
     // --- Events ---
     event WinnerPicked(address indexed winner);
 
     // --- Constructor ---
-    constructor(uint256 entranceFee,uint256 interval,address vrfCoordinator) 
-    VRFConsumerBaseV2Plus(vrfCoordinator) {
+    constructor(
+        uint256 entranceFee,
+        uint256 interval,
+        address vrfCoordinator,
+        bytes32 gaslane,
+        uint256 subscriptionId,
+        uint32 callbackGasLimit
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
         s_lastTimeStamp = block.timestamp;
+        i_keyHash = gaslane;
+        i_subscriptionId = subscriptionId;
+        i_callbackGasLimit = callbackGasLimit;
     }
 
     // --- External Functions ---
-    function pickWinner() view external {
+    function pickWinner() external {
         if ((block.timestamp - s_lastTimeStamp) < i_interval) {
             revert(); // Optional: make this a custom error
         }
 
         //Request randomness
-        // uint256 requestId = s_vrfCoordinator.requestRandomWords(
-        //     VRFV2PlusClient.RandomWordsRequest({
-        //         keyHash: keyHash,
-        //         subId: s_subscriptionId,
-        //         requestConfirmations: requestConfirmations,
-        //         callbackGasLimit: callbackGasLimit,
-        //         numWords: numWords,
-        //         extraArgs: VRFV2PlusClient._argsToBytes(
-        //             VRFV2PlusClient.ExtraArgsV1({
-        //                 nativePayment: enableNativePayment
-        //             })
-        //         )
-        //     })
-        // );
+
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: i_keyHash, // the maximum gas price you are willing to pay
+            subId: i_subscriptionId, // The subscription ID that this contract uses for funding requests.
+            requestConfirmations: REQUEST_CONFIRMATIONS, // How many confirmations the Chainlink node should wait before responding
+            callbackGasLimit: i_callbackGasLimit, // limit for how much gas to use for the callback request to your contract's
+            numWords: NUM_WORDS, // no of random numbers we want
+            extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+        });
+
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
 
     // --- Internal Functions ---
-    function fulfillRandomWords(
-        uint256 , 
-        uint256[] calldata randomWords
-    ) internal override {}
+    function fulfillRandomWords(uint256, uint256[] calldata randomWords) internal override {}
 
     // --- View / Pure Functions ---
     function getEntranceFee() external view returns (uint256) {
