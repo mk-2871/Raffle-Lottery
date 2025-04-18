@@ -12,7 +12,8 @@ pragma solidity ^0.8.19;
 // Modifiers
 // Functions
 
-import {VRFConsumerBaseV2Plus} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFConsumerBaseV2Plus} from
+    "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 /**
@@ -25,6 +26,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // --- Errors ---
     error Raffle__SendMoreToEnterRaffle();
     error Raffle__TransferFailed();
+    error Raffle__RaffleNotOpen();
+
+    // --- Type Declaration ---
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
 
     // --- State Variables ---
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
@@ -37,9 +45,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
     address private s_recentWinner;
+    RaffleState private s_raffleState;
 
     // --- Events ---
     event WinnerPicked(address indexed winner);
+    event RaffleEnter(address indexed player);
 
     // --- Constructor ---
     constructor(
@@ -52,10 +62,25 @@ contract Raffle is VRFConsumerBaseV2Plus {
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
-        s_lastTimeStamp = block.timestamp;
         i_keyHash = gaslane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
+
+        s_lastTimeStamp = block.timestamp;
+        s_raffleState = RaffleState.OPEN;
+    }
+
+    function enterRaffle() external payable {
+        if (msg.value < i_entranceFee) {
+            revert Raffle__SendMoreToEnterRaffle();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen();
+        }
+
+        s_players.push(payable(msg.sender));
+
+        emit RaffleEnter(msg.sender);
     }
 
     // --- External Functions ---
@@ -64,36 +89,37 @@ contract Raffle is VRFConsumerBaseV2Plus {
             revert(); // Optional: make this a custom error
         }
 
-        //Request randomness
+        s_raffleState = RaffleState.CALCULATING;
 
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
-            .RandomWordsRequest({
-                keyHash: i_keyHash, // the maximum gas price you are willing to pay
-                subId: i_subscriptionId, // The subscription ID that this contract uses for funding requests.
-                requestConfirmations: REQUEST_CONFIRMATIONS, // How many confirmations the Chainlink node should wait before responding
-                callbackGasLimit: i_callbackGasLimit, // limit for how much gas to use for the callback request to your contract's
-                numWords: NUM_WORDS, // no of random numbers we want
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            });
+        //Request randomness
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: i_keyHash, // the maximum gas price you are willing to pay
+            subId: i_subscriptionId, // The subscription ID that this contract uses for funding requests.
+            requestConfirmations: REQUEST_CONFIRMATIONS, // How many confirmations the Chainlink node should wait before responding
+            callbackGasLimit: i_callbackGasLimit, // limit for how much gas to use for the callback request to your contract's
+            numWords: NUM_WORDS, // no of random numbers we want
+            extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+        });
 
         uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
 
     // --- Internal Functions ---
-    function fulfillRandomWords(
-        uint256,
-        uint256[] calldata randomWords
-    ) internal override {
-
+    function fulfillRandomWords(uint256, uint256[] calldata randomWords) internal override {
         uint256 indexofWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexofWinner];
         s_recentWinner = recentWinner;
+
+        s_raffleState = RaffleState.OPEN;
+        s_players = new address payable[](0); // Resetting the players array
+        s_lastTimeStamp = block.timestamp; // Resetting the clock
+
         (bool success,) = recentWinner.call{value: address(this).balance}("");
-        if(!success){
+        if (!success) {
             revert Raffle__TransferFailed();
-        } 
+        }
+
+        emit WinnerPicked(s_recentWinner);
     }
 
     // --- View / Pure Functions ---
