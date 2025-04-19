@@ -132,7 +132,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     // --- Internal Functions ---
-    function fulfillRandomWords(uint256, /*requestId*/ uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(
+        uint256,
+        /*requestId*/
+        uint256[] calldata randomWords
+    ) internal override {
         //Checks
 
         //Effects (Internal Contract State)
@@ -155,5 +159,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // --- View / Pure Functions ---
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
     }
 }
