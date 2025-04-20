@@ -29,4 +29,11 @@ contract CreateSubscription is Script {
     function run() public {
         createSubscriptionUsingConfig();
     }
+
+    function fundSubscriptionUsingConfig() public{
+        HelperConfig helperConfig = new HelperConfig();
+        address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
+        address subscriptionId = helperConfig.getConfig().vrfCoordinator;
+    }
+
 }

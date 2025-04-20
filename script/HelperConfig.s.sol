@@ -28,6 +28,7 @@ contract HelperConfig is CodeConstants, Script {
         bytes32 gaslane;
         uint256 subscriptionId;
         uint32 callbackGasLimit;
+        address link;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -58,7 +59,8 @@ contract HelperConfig is CodeConstants, Script {
             vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
             gaslane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             callbackGasLimit: 500000,
-            subscriptionId: 0
+            subscriptionId: 0,
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
         });
     }
 
