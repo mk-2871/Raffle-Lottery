@@ -9,7 +9,7 @@ import {VRFCoordinatorV2_5Mock} from
 import {console} from "forge-std/console.sol";
 
 contract CreateSubscription is Script {
-    function createSubscriptionUsingConfig() public returns (uint256, address) {
+    function createSubscriptionUsingConfig() public returns (uint256, address) { 
         HelperConfig helperConfig = new HelperConfig();
         address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
         (uint256 subId,) = createSubscription(vrfCoordinator);
@@ -30,10 +30,9 @@ contract CreateSubscription is Script {
         createSubscriptionUsingConfig();
     }
 
-    function fundSubscriptionUsingConfig() public{
+    function fundSubscriptionUsingConfig() public {
         HelperConfig helperConfig = new HelperConfig();
         address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
         address subscriptionId = helperConfig.getConfig().vrfCoordinator;
     }
-
 }
