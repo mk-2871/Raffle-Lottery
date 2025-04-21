@@ -34,5 +34,7 @@ contract CreateSubscription is Script {
         HelperConfig helperConfig = new HelperConfig();
         address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
         address subscriptionId = helperConfig.getConfig().vrfCoordinator;
+        address linkToken = helperConfig.getConfig().link;
+        fundSubscriptionUsingConfig(vrfCoordinator, subscriptionId, linkToken);
     }
 }

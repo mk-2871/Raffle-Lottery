@@ -94,6 +94,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * @return upkeepNeeded - true if it's to restart the lottry
      * @return - ignored
      */
+     
     function checkUpkeep(
         bytes memory /* checkData */ // call the lottry
     ) public view returns (bool upkeepNeeded, bytes memory /* performData */ ) {

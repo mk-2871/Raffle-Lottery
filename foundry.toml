@@ -2,4 +2,6 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-remappings = ['@chainlink/contracts/=lib/chainlink-brownie-contracts/contacts/']
+remappings = [
+    '@chainlink/contracts/=lib/chainlink-brownie-contracts/contacts/',
+    '@solmate=lib/solmate/src/',]
