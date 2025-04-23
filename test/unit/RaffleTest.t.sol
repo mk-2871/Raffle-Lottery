@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.18;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "lib/forge-std/src/Test.sol";
 import {Raffle} from "src/Raffle.sol";
 import {DeployRaffle} from "script/DeployRaffle.s.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
@@ -21,7 +21,7 @@ contract RaffleTest is Test {
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
-    event RaffleEntered(address indexed player);
+    event RaffleEnter(address indexed player);
     event WinnerPicked(address indexed winner);
 
     function setUp() external {
@@ -64,7 +64,7 @@ contract RaffleTest is Test {
         vm.prank(PLAYER);
         // Act
         vm.expectEmit(true, false, false, false, address(raffle));
-        emit RaffleEntered(PLAYER);
+        emit RaffleEnter(PLAYER);
         // Assert
         raffle.enterRaffle{value: entranceFee}();
     }
