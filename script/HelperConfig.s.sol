@@ -62,7 +62,8 @@ contract HelperConfig is CodeConstants, Script {
                 vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
                 gaslane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
                 callbackGasLimit: 500000,
-                subscriptionId: 95683530954433657101888306971877287491890269736311904408562855705760462637372,
+                subscriptionId: 0, // Update this with your subscription ID
+                //subscriptionId: 95683530954433657101888306971877287491890269736311904408562855705760462637372,
                 link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
             });
     }
@@ -94,5 +95,14 @@ contract HelperConfig is CodeConstants, Script {
         });
 
         return localNetworkConfig;
+    }
+
+    // Add a function to update the subscription ID
+    function updateSubscriptionId(uint256 chainId, uint256 subscriptionId) external {
+        if (chainId == LOCAL_CHAIN_ID) {
+            localNetworkConfig.subscriptionId = subscriptionId;
+        } else {
+            networkConfigs[chainId].subscriptionId = subscriptionId;
+        }
     }
 }

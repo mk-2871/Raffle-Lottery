@@ -8,6 +8,7 @@ import {DeployRaffle} from "script/DeployRaffle.s.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
 import {Vm} from "lib/forge-std/src/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {console} from "lib/forge-std/src/console.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -38,10 +39,18 @@ contract RaffleTest is Test {
 
         vm.deal(PLAYER, STARTING_PLAYER_BALANCE);
 
-        VRFCoordinatorV2_5Mock(payable(vrfCoordinator)).fundSubscription(
-            subscriptionId,
-            10 ether
-        );
+        // The subscription was already created and funded during deployment
+        // We don't need to fund it again here since DeployRaffle handles this
+        // But if you want to add more funds, make sure to use the correct subscriptionId
+
+        // Get the actual subscription ID from the raffle contract deployment
+        // Since the subscription was created during deployment, we can fund it with the correct ID
+        if (subscriptionId != 0) {
+            VRFCoordinatorV2_5Mock(payable(vrfCoordinator)).fundSubscription(
+                subscriptionId,
+                100 ether // Insufficientbalance() error was resolvd after increasing the subscriptionid from 10 to 100 ether
+            );
+        }
     }
 
     function testRaffleInitializesInOpenState() public view {
@@ -202,7 +211,7 @@ contract RaffleTest is Test {
             i++
         ) {
             address player = address(uint160(i));
-            hoax(player, 1 ether); // deal 1 eth to the player
+            hoax(player, 0.01 ether); // deal 1 eth to the player
             raffle.enterRaffle{value: entranceFee}();
         }
 

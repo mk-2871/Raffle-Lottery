@@ -18,6 +18,9 @@ contract DeployRaffle is Script {
             CreateSubscription createSubscription = new CreateSubscription();
             (config.subscriptionId, config.vrfCoordinator) = createSubscription
                 .createSubscription(config.vrfCoordinator);
+            
+            // Update the subscription ID in the helper config
+            helperConfig.updateSubscriptionId(block.chainid, config.subscriptionId);
         }
 
         vm.startBroadcast();
@@ -30,7 +33,7 @@ contract DeployRaffle is Script {
             config.callbackGasLimit
         );
 
-        // 👇 Cast the coordinator back to mock and add the Raffle as a consumer
+        // Cast the coordinator back to mock and add the Raffle as a consumer
         VRFCoordinatorV2_5Mock(config.vrfCoordinator).addConsumer(
             config.subscriptionId,
             address(raffle)
