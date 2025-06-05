@@ -8,6 +8,7 @@ import {VRFCoordinatorV2_5Mock} from "lib/chainlink-brownie-contracts/contracts/
 import {console} from "lib/forge-std/src/console.sol";
 import {LinkToken} from "test/mocks/LinkToken.sol";
 import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
+import {console} from "lib/forge-std/src/console.sol";
 
 contract CreateSubscription is Script {
     function createSubscriptionUsingConfig() public returns (uint256, address) {

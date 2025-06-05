@@ -5,12 +5,14 @@ pragma solidity ^0.8.18;
 import {Test} from "lib/forge-std/src/Test.sol";
 import {Raffle} from "src/Raffle.sol";
 import {DeployRaffle} from "script/DeployRaffle.s.sol";
-import {HelperConfig} from "script/HelperConfig.s.sol";
+import {HelperConfig, CodeConstants} from "script/HelperConfig.s.sol";
 import {Vm} from "lib/forge-std/src/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {console} from "lib/forge-std/src/console.sol";
+import {CodeConstants} from "script/HelperConfig.s.sol";
+import {LinkToken} from "test/mocks/LinkToken.sol";
 
-contract RaffleTest is Test {
+contract RaffleTest is CodeConstants, Test {
     Raffle public raffle;
     HelperConfig public helperConfig;
 
@@ -45,10 +47,10 @@ contract RaffleTest is Test {
 
         // Get the actual subscription ID from the raffle contract deployment
         // Since the subscription was created during deployment, we can fund it with the correct ID
-        if (subscriptionId != 0) {
+        if (subscriptionId != 0 && block.chainid == LOCAL_CHAIN_ID) {
             VRFCoordinatorV2_5Mock(payable(vrfCoordinator)).fundSubscription(
                 subscriptionId,
-                100 ether // Insufficientbalance() error was resolvd after increasing the subscriptionid from 10 to 100 ether
+                100 ether
             );
         }
     }
@@ -184,9 +186,16 @@ contract RaffleTest is Test {
         assert(uint256(raffleState) == 1);
     }
 
+    modifier skipFork() {
+        if (block.chainid != LOCAL_CHAIN_ID) {
+            return;
+        }
+        _;
+    }
+
     function testFullfillrandomWordsCanOnlyBeCalledAfterPerformUpkeep(
         uint256 randomRequestId
-    ) public raffleEntered {
+    ) public raffleEntered skipFork {
         // Arrange / Act / Assert
         vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
         VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
@@ -198,8 +207,11 @@ contract RaffleTest is Test {
     function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney()
         public
         raffleEntered
+        skipFork
     {
         address expectedWinner = address(1);
+        // Add this line to fund the expected winner
+        hoax(expectedWinner, 1 ether);
 
         // Arrange
         uint256 additionalEntrances = 3;
